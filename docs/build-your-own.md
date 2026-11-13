@@ -27,10 +27,10 @@ printf '%s  /routeros/image.zip\n' "$ROUTEROS_SHA256" | sha256sum -c -
 
 ### Why Vanilla?
 
-Pre-baking configuration into virtual disk images creates several failure modes:
-1. **Supply-chain opacity:** Readers and auditors cannot easily inspect what has been changed inside a pre-built `.vdi` or `.qcow2` binary.
+Pre-baking configuration into virtual disk images creates several critical failure modes:
+1. **Supply-chain opacity:** Readers and auditors cannot easily inspect what has been altered inside a pre-built `.vdi` or `.qcow2` binary.
 2. **Upgrade brittleness:** Minor RouterOS version upgrades can fail if disk structures or internal configuration databases conflict.
-3. **Reset vulnerability:** A factory reset (`/system reset-configuration`) wipes disk modifications back to stock MikroTik defaults unless backed by an official branding package.
+3. **Reset vulnerability:** A factory reset (`/system reset-configuration`) wipes disk modifications back to stock MikroTik defaults unless backed by an official branding package with an embedded default configuration script.
 
 Keeping the base image vanilla and applying customizations via API automation after boot guarantees a pristine, repeatable foundation.
 
@@ -104,7 +104,7 @@ The persistent storage lives under `/routeros/data`.
 
 ## 3. Entrypoint Networking Architecture
 
-QEMU user-mode (SLIRP) networking suffers from high latency and cannot easily provide bidirectional L2 packet processing. To give RouterOS a native virtual Ethernet interface, the container entrypoint builds a bridge and TAP network architecture.
+QEMU user-mode (SLIRP) networking suffers from high latency and cannot easily provide bidirectional L2 packet processing. To give RouterOS a native virtual Ethernet interface, the container entrypoint builds an internal bridge and TAP network architecture.
 
 ```
 +-------------------------------------------------------------------+
@@ -223,7 +223,7 @@ fi
 
 On subsequent starts, existing disk data is preserved without re-copying or re-sizing.
 
-### QEMU Execution
+### QEMU Execution & Container Limits
 
 QEMU is launched with serial console output redirected to `mon:stdio` for Docker log visibility:
 
@@ -235,6 +235,8 @@ exec qemu-system-x86_64 \
   -net tap,ifname=tap0,script=no,downscript=no \
   -nographic -serial mon:stdio
 ```
+
+When defining memory limits or CPU allocations in `docker-compose.yml`, ensure `mem_limit` and `cpus` are set equal to or greater than the QEMU requirements (at least 4 GB RAM and 4 CPUs) so the virtual machine does not experience memory exhaustion.
 
 ---
 
@@ -248,15 +250,25 @@ A central design rule of this project is: **RouterOS services keep their default
 - SSH listens on port `22`.
 - SSTP listens on port `443`.
 
-Only the **host-side** bindings shift to prevent host conflicts:
+What changes is only the **host side** of the mapping:
 
 | Host Port | Guest Port | Reason |
 | :--- | :--- | :--- |
-| `8291` | `8291` | Standard WinBox port; rarely conflicts on hosts. |
+| `8291` | `8291` | Standard WinBox port; rarely conflicts on host servers. |
 | `8728` | `8728` | Standard RouterOS API port; used by `provision.py`. |
-| `808` | `80` | WebFig stays on port 80 inside; host port moves to 808 to avoid taking port 80 from host web servers. |
+| `808` | `80` | WebFig stays on port 80 inside; host port moves to 808 so the host's port 80 remains available for reverse proxies. |
 | `322` | `22` | RouterOS SSH stays on port 22 inside; host port moves to 322 so it never clashes with the host machine's own SSH daemon. |
-| `1010` | `443` | RouterOS SSTP server listens on standard port 443 inside; host port moves to 1010 because host port 443 is typically claimed by Traefik, Nginx, or Caddy. |
+| `1010` | `443` | RouterOS SSTP server listens on standard port 443 inside; host port moves to 1010 because host port 443 belongs to Traefik, Caddy, or Nginx. |
+
+### The Truth About Port Moving
+
+Let us be completely transparent: if your Docker host is dedicated exclusively to RouterOS and is **not** running its own SSH on port 22 or Traefik/Nginx on ports 80 and 443, mapping them 1:1 works perfectly.
+
+Moving the host ports is strictly about **avoiding collisions with the host server** (and stepping outside the most heavily automated port scans on the internet). The guest router requires no internal port changes.
+
+### Why Ports 21 and 23 Are Disabled
+
+Ports 21 (FTP) and 23 (Telnet) are a completely different case: they are **not remapped — they are explicitly disabled inside RouterOS**. They are insecure, plaintext legacy protocols that transmit administrative credentials unencrypted over the network.
 
 > [!IMPORTANT]
 > **Project Scope Notice:** This project does **not** configure or enable any VPN server, certificates, or PPP profiles. RouterOS boots with default service states. Port 1010 is mapped directly to container port 443 as an open passthrough path for operators who choose to configure SSTP inside RouterOS. Do not treat SSTP as a pre-configured service of this project.
@@ -355,7 +367,41 @@ With `defconfig.rsc` embedded in `branding.dpk`, the provisioned administrator, 
 
 ---
 
-## 8. Verification Checklist (Windows Test Evidence)
+## 8. Security: Why Credentials Change the Moment the Router Boots
+
+Changing the default credentials immediately upon startup is not a matter of aesthetics or cosmetic cleanup — it is the **primary security requirement** of running RouterOS in cloud and container environments.
+
+### The Threat Model: Automated Internet Scanners
+
+The public IPv4 address space is continuously scanned by automated botnets seeking unauthenticated RouterOS instances. A fresh MikroTik router listening on its factory defaults (`admin` with an empty password) is typically indexed by scanning engines within minutes of exposure.
+
+The automated playbook executed by these bots is well known:
+1. Connect over port 8291 (WinBox), port 80 (WebFig), or port 8728 (API).
+2. Authenticate as `admin` with a blank password.
+3. Immediately change the administrative password or install rogue scripts.
+4. **Lock the legitimate owner out of their own router.**
+5. Enlist the appliance into a DDoS botnet, malware proxy pool, or DNS amplification network.
+
+### The Defense: Disabling `admin` and Closing the Window
+
+Our automated provisioning workflow neutralizes this threat:
+- **Zero Public Defaults:** The provisioning script leaves exactly one door open: the operator's own administrative user, created with credentials defined in their own branding package and provisioning execution. Because each operator generates their own package with their own credentials, there is no shared or published default password that bots can brute-force.
+- **Disabling Built-In Admin:** The stock `admin` user is fully disabled (`disabled=yes`). Even if an attacker attempts dictionary attacks against `admin`, RouterOS rejects the connection immediately.
+- **Service Hardening in `defconfig.rsc`:**
+  - `telnet` (port 23): **Disabled** (unencrypted plaintext).
+  - `ftp` (port 21): **Disabled** (unencrypted plaintext).
+  - `api-ssl`: **Disabled** unless explicitly configured with trusted certificates.
+  - Only `www` (WebFig), `ssh`, and `api` remain enabled.
+
+### Branding as Attribution
+
+In this project, custom branding is **attribution, not mystery**:
+- It signs the deployment with the identity of the operator who built and manages it (in our default image: identity/platform `RMZ`, the terminal ASCII logo, and `ramez-hany.com`).
+- A branded router visibly signals that the node is under deliberate, active administrative control — not an unmonitored, neglected default appliance.
+
+---
+
+## 9. Verification Checklist (Windows Test Evidence)
 
 The container architecture was built and validated on Windows using Docker Desktop (TCG software emulation without KVM). The following checklist documents the verified test results:
 

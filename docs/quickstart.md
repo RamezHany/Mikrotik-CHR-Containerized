@@ -1,14 +1,14 @@
 # Quickstart: Use Our Image Directly
 
-This guide covers **Path 1**: pulling the published image, running it via Docker Compose, performing your first login, and applying automated branding and credentials using the one-shot provisioning runner.
+This guide covers **Path 1**: pulling the published container image, starting it with Docker Compose, performing your first login, and executing automated one-shot provisioning to brand and secure the router.
 
 ---
 
 ## 1. Pull the Image
 
-The published image is hosted on the GitHub Container Registry (GHCR) and mirrored on Docker Hub.
+The published image is hosted on both GitHub Container Registry (GHCR) and Docker Hub.
 
-### GitHub Container Registry (Primary)
+### GitHub Container Registry (GHCR)
 
 ```bash
 docker pull ghcr.io/ramezhany/mikrotik-chr-containerized:7.20.4
@@ -16,12 +16,19 @@ docker pull ghcr.io/ramezhany/mikrotik-chr-containerized:7.20.4
 
 ### Docker Hub (Mirror)
 
+The image is mirrored live on Docker Hub under the owner's account:
+
 ```bash
-docker pull <dockerhub-username>/mikrotik-chr-containerized:7.20.4
+docker pull ramezhany1/mikrotik-chr-containerized:7.20.4
 ```
 
-> [!NOTE]
-> `<dockerhub-username>` is a placeholder. When pulling from Docker Hub, replace it with the repository owner's Docker Hub account name or organization once published.
+*(Tag `latest` is also available: `docker pull ramezhany1/mikrotik-chr-containerized:latest`)*
+
+> [!WARNING]
+> **Registry Naming Notice:** Note the difference in account names:
+> - **Docker Hub username:** `ramezhany1` (with a `1`)
+> - **GitHub / GHCR owner:** `ramezhany` (no `1`)
+> - **GitHub Repository:** `RamezHany/mikrotik-chr-containerized`
 
 ---
 
@@ -63,14 +70,18 @@ You can connect immediately through any of the following interfaces:
 - **WinBox:** Connect to `<host-ip>:8291` with user `admin` and an empty password.
 - **SSH:** Run `ssh -p 322 admin@<host-ip>`
 
-> [!WARNING]
-> A pristine CHR instance allows unauthenticated administrative access from any network client that can reach the host ports. Do not leave the router in this state. Change the password immediately via WinBox/WebFig, or run the automated provisioning workflow below.
+### Why This State Must Not Survive the Hour
+
+> [!CAUTION]
+> **Critical Security Warning:** The public internet is constantly combed by automated botnets scanning for open RouterOS management ports. When a bot discovers an instance running the stock `admin` account with a blank password, its first action is to change the password, lock the rightful owner out, and enroll the router into a botnet or proxy network.
+>
+> **Do not leave the router with default credentials.** Either change the password immediately via WinBox/WebFig, or run the automated provisioning workflow below.
 
 ---
 
 ## 4. One-Shot Provisioning (Branding & User Setup)
 
-The repository provides an automated, out-of-band provisioning profile in Docker Compose that configures the router via its API.
+The repository provides an automated, out-of-band provisioning profile in Docker Compose that configures the router via its API and permanently secures it.
 
 ### Prerequisites
 
@@ -85,7 +96,7 @@ Execute the following command:
 docker compose --profile provision run --rm provision
 ```
 
-### What Provisioning Does
+### What Provisioning Changes
 
 The provision runner executes [`provision.py`](https://github.com/RamezHany/mikrotik-chr-containerized/blob/main/provision.py) through a temporary container attached to the `mikrotik` service network:
 
@@ -94,7 +105,7 @@ The provision runner executes [`provision.py`](https://github.com/RamezHany/mikr
 3. **Login Verification:** Establishes a second, independent API connection using the new administrator credentials to ensure the account works before touching anything else.
 4. **Package Delivery:** Starts an ephemeral HTTP server inside the provisioning container, instructs RouterOS via `/tool/fetch` to download `branding.dpk`, and verifies the exact file size on the router.
 5. **Reboot & Installation:** Reboots the router (`/system/reboot`), allowing RouterOS to unpack and apply the `.dpk` package during system startup.
-6. **Verification & Hardening:** Re-authenticates over the API as the new admin user, checks installed packages via `/system/package/print`, and **disables the built-in `admin` account LAST**. Disabling `admin` only after the new user is verified guarantees you will never be locked out.
+6. **Hardening & Lockout Prevention:** Re-authenticates over the API as the new admin user, checks installed packages via `/system/package/print`, and **disables the built-in `admin` account LAST**. Disabling `admin` only after the new user is verified guarantees you will never be locked out.
 
 ---
 
@@ -111,5 +122,5 @@ The provision runner executes [`provision.py`](https://github.com/RamezHany/mikr
 
 ## Next Steps
 
-- Need to customize the base image, explore the bridge networking internals, or build your own branding package? Read the full **[Build Your Own Guide](build-your-own.md)**.
+- Need to customize the base image, explore the bridge networking internals, understand the security model, or build your own branding package? Read the full **[Build Your Own Guide](build-your-own.md)**.
 - Return to the **[Documentation Index](index.md)**.

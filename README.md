@@ -19,17 +19,24 @@ The fastest path to running RouterOS CHR is pulling the published pre-built imag
 
 ### Pull the Image
 
-**GitHub Container Registry (Primary):**
+The published image is hosted on both GitHub Container Registry (GHCR) and Docker Hub:
+
+**GitHub Container Registry (GHCR):**
 ```bash
 docker pull ghcr.io/ramezhany/mikrotik-chr-containerized:7.20.4
 ```
 
 **Docker Hub (Mirror):**
 ```bash
-docker pull <dockerhub-username>/mikrotik-chr-containerized:7.20.4
+docker pull ramezhany1/mikrotik-chr-containerized:7.20.4
 ```
+*(Tag `latest` is also available: `docker pull ramezhany1/mikrotik-chr-containerized:latest`)*
 
-*(Note for owner: Replace `<dockerhub-username>` with your Docker Hub account name).*
+> [!WARNING]
+> **Registry Naming Notice:**
+> - **Docker Hub username:** `ramezhany1` (with a `1`)
+> - **GitHub / GHCR owner:** `ramezhany` (no `1`)
+> - **Repository:** `RamezHany/mikrotik-chr-containerized`
 
 ### Run with Docker Compose (Recommended)
 
@@ -64,11 +71,12 @@ Connect immediately via:
 - **WinBox:** Connect to `<host-ip>:8291`
 - **SSH:** `ssh -p 322 admin@<host-ip>`
 
-Change the password immediately, or run the one-shot provisioning runner below.
+> [!CAUTION]
+> Do not leave the router with default credentials. Automated bots on the public internet scan for open RouterOS instances to hijack them. Change the password immediately, or run the one-shot provisioning runner below.
 
 ### One-Shot Provisioning
 
-Once your `branding.dpk` package is placed in the project root directory alongside `docker-compose.yml`, apply branding and create the dedicated administrator account with:
+Once your `branding.dpk` package is placed in the project root directory alongside `docker-compose.yml`, apply branding, create your administrator, and secure the router with:
 
 ```bash
 docker compose --profile provision run --rm provision
@@ -115,7 +123,20 @@ For details, see [PROVISIONING.md](PROVISIONING.md) and [docs/build-your-own.md]
 
 ---
 
-## 4. Port Mapping Reference
+## 4. Security: Why Credentials Change Immediately
+
+Changing the default credentials the moment the router boots is not cosmetic — it is the **first and most vital security act**:
+
+- **Active Scanning & Hijacking:** Internet-wide bots actively scan for default RouterOS instances. Once discovered, bots connect as `admin` / blank, change the password, and lock the legitimate owner out of their own router.
+- **Closing the Attack Surface:** Our provisioning workflow completely disables the built-in `admin` account (`disabled=yes`) and leaves only the operator's private account created from their own package. Because every operator creates their own credentials, there is no shared default password.
+- **Service Hardening:** Obsolete, unencrypted plaintext protocols (`telnet` on 23, `ftp` on 21) are disabled by [`defconfig.rsc`](defconfig.rsc).
+- **Branding as Attribution:** Branding is attribution: it marks the appliance as configured and administered by the operator (identity `RMZ`, ASCII terminal banner, `ramez-hany.com`), acting as an administrative signature on the deployment.
+
+Read the complete security rationale in **[docs/build-your-own.md#8-security-why-credentials-change-the-moment-the-router-boots](docs/build-your-own.md#8-security-why-credentials-change-the-moment-the-router-boots)**.
+
+---
+
+## 5. Port Mapping Reference & Philosophy
 
 RouterOS services keep their **default ports inside the container**; only host-side ports shift to avoid clashes with host daemons or web proxies:
 
@@ -127,12 +148,18 @@ RouterOS services keep their **default ports inside the container**; only host-s
 | **`322`** | `22` | TCP | SSH | Secure shell (host moves to `322` to avoid host SSH collision) |
 | **`1010`** | `443` | TCP | SSTP Passthrough | Direct passthrough to RouterOS port `443` (host moves to `1010` to keep `443` open for reverse proxies) |
 
+### Why 443, 80, and 22 Move (and 21/23 are Disabled)
+
+- **Host Coexistence:** Host servers usually run their own SSH on port 22 and web proxies (Traefik, Nginx) on 80 and 443. Shifting host ports to 322, 808, and 1010 prevents binding clashes. If your host is dedicated and not using 22/80/443, 1:1 mapping works fine.
+- **Plaintext Ports Disabled:** Port 21 (FTP) and Port 23 (Telnet) are not remapped; they are explicitly disabled in RouterOS for security.
+- **Uncontested Ports Unchanged:** WinBox 8291 and API 8728 retain standard ports on both host and container.
+
 > [!NOTE]
 > This project does **not** configure VPN services, PPP users, or certificates. Port 1010 is mapped directly to container port 443 solely as an available passthrough path if you choose to configure SSTP inside RouterOS.
 
 ---
 
-## 5. Verification Summary
+## 6. Verification Summary
 
 The implementation was built and validated on Windows using Docker Desktop (TCG software emulation):
 
@@ -142,7 +169,7 @@ The implementation was built and validated on Windows using Docker Desktop (TCG 
 - **Reset Survival:** `/system reset-configuration` confirmed to automatically restore the branded admin and service hardening from `defconfig.rsc`.
 - **Restart Persistence:** `docker compose restart` confirmed volume `/routeros/data` persists disk state without reset.
 
-See the complete test evidence in **[docs/build-your-own.md](docs/build-your-own.md#8-verification-checklist-windows-test-evidence)**.
+See the complete test evidence in **[docs/build-your-own.md](docs/build-your-own.md#9-verification-checklist-windows-test-evidence)**.
 
 ---
 
