@@ -12,7 +12,7 @@ DISK="/routeros/data/chr.qcow2"
 # First run: seed the persistent guest disk from the pristine CHR image.
 if [ ! -f "$DISK" ]; then
   qemu-img convert -f vdi -O qcow2 "$IMG" "$DISK"
-  qemu-img resize "$DISK" 8G
+  qemu-img resize "$DISK" "${DISK_SIZE:-1G}"
 fi
 
 # --- Networking (to finalize Friday against the reference implementation) ---
@@ -30,7 +30,7 @@ fi
 # ... NAT/forwarding rules as in reference projects ...
 
 exec qemu-system-x86_64 \
-  -m 512 -smp 2 \
+  -m "${QEMU_RAM:-4096}" -smp "${QEMU_CPUS:-4}" \
   -drive file="$DISK",format=qcow2,if=virtio \
   -netdev tap,id=net0,ifname=tap0,script=no,downscript=no \
   -device virtio-net-pci,netdev=net0 \
