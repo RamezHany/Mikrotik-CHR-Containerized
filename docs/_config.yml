@@ -1,0 +1,4 @@
+title: MikroTik CHR Containerized
+description: MikroTik RouterOS (CHR) running inside Docker via QEMU — plain vanilla image with post-deploy provisioning.
+theme: jekyll-theme-cayman
+show_downloads: false
