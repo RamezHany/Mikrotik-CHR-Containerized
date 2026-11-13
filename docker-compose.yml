@@ -1,0 +1,51 @@
+# MikroTik RouterOS (CHR) in Docker — runs on any Docker host.
+#
+# RouterOS services keep their DEFAULT ports inside the container
+# (WinBox 8291, API 8728, WebFig 80, SSH 22, SSTP 443). Only the host-side
+# ports move out of the way: WebFig 808, SSH 322, SSTP 1010 (the host's 443
+# usually belongs to a web stack / reverse proxy). This project does NOT
+# configure RouterOS for you — no VPN setup, no settings changed. It boots
+# a pristine CHR; provisioning (below) only adds the default user and your
+# branding.
+services:
+  mikrotik:
+    build: .
+    image: ghcr.io/ramezhany/mikrotik-chr-containerized:7.20.4
+    container_name: mikrotik-chr
+    privileged: true
+    restart: unless-stopped
+    environment:
+      - QEMU_RAM=4096
+      - QEMU_CPUS=4
+      - DISK_SIZE=1G
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+      # - /dev/kvm   # optional, Linux hosts only: much faster than emulation
+    volumes:
+      - mikrotik_data:/routeros/data
+    ports:
+      - "8291:8291" # WinBox
+      - "8728:8728" # RouterOS API
+      - "808:80"    # WebFig (HTTP)
+      - "322:22"    # SSH
+      - "1010:443"  # SSTP (RouterOS default 443 inside; host 1010)
+
+  # One-shot provisioning: creates the default user (ramez / ramez, group
+  # full), verifies it, and installs your Branding Maker package.
+  # Put your branding.dpk next to this file first, then run:
+  #   docker compose --profile provision run --rm provision
+  provision:
+    image: python:3.12-alpine
+    profiles: ["provision"]
+    network_mode: "service:mikrotik"
+    depends_on:
+      - mikrotik
+    volumes:
+      - ./provision.py:/work/provision.py:ro
+      - ./branding.dpk:/work/branding.dpk:ro
+    command: ["python3", "/work/provision.py", "172.24.0.2", "--dpk", "/work/branding.dpk"]
+
+volumes:
+  mikrotik_data:

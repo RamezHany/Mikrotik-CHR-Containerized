@@ -21,7 +21,7 @@ docker build -t ghcr.io/ramezhany/mikrotik-chr-containerized:7.20.4 .
 docker run -d --name mikrotik --privileged \
   --cap-add NET_ADMIN --device /dev/net/tun \
   -v mikrotik_data:/routeros/data \
-  -p 8291:8291 -p 8728:8728 -p 808:80 -p 3222:22 -p 1010:1010 \
+  -p 8291:8291 -p 8728:8728 -p 808:80 -p 322:22 -p 1010:443 \
   ghcr.io/ramezhany/mikrotik-chr-containerized:7.20.4
 ```
 
@@ -30,11 +30,20 @@ docker run -d --name mikrotik --privileged \
 | 8291 | 8291 | WinBox |
 | 8728 | 8728 | RouterOS API |
 | 808 | 80 | WebFig (HTTP) |
-| 3222 | 22 | SSH |
-| 1010 | 1010 | SSTP VPN server |
+| 322 | 22 | SSH |
+| 1010 | 443 | SSTP (RouterOS keeps its default port 443 inside — the host port is 1010 because 443 usually belongs to the web stack) |
 
 First login is `admin` with a blank password (pristine CHR) — set a password
 immediately, or run the provisioning script below.
+
+## Docker Compose
+
+Prefer Compose? `docker compose up -d` in this repo does the same thing on any Docker host.
+Once you have your `branding.dpk` (see below), apply branding + the default user with:
+
+```bash
+docker compose --profile provision run --rm provision
+```
 
 ## Provisioning (branding + default user)
 
