@@ -11,6 +11,12 @@ MikroTik RouterOS (Cloud Hosted Router / CHR) running inside Docker via QEMU —
 Full documentation is available in the [`docs/`](docs/) directory and served via GitHub Pages at:  
 👉 **[https://ramezhany.github.io/Mikrotik-CHR-Containerized/](https://ramezhany.github.io/Mikrotik-CHR-Containerized/)**
 
+## Status
+
+- ✅ **v1.0.0 released** — the image is published on GHCR and Docker Hub (`7.20.4` and `latest`).
+- ✅ **Tested live on Dokploy** — deployed on a real Dokploy server: RouterOS 7.20.4 boots cleanly, WinBox / WebFig / SSH are reachable, and the configuration persists across redeploys.
+- 🚀 **Official Dokploy template submitted** — [Dokploy/templates PR #1330](https://github.com/Dokploy/templates/pull/1330): the blueprint passed the templates repo validation (all CI checks green) and is awaiting maintainer review.
+
 ---
 
 ## 1. Quickstart (Use Our Image)
