@@ -21,6 +21,8 @@ Full documentation is available in the [`docs/`](docs/) directory and served via
 - ✅ **Tested live on Dokploy** — deployed on a real Dokploy server: RouterOS 7.20.4 boots cleanly, WinBox / WebFig / SSH are reachable, and the configuration persists across redeploys.
 - 🚀 **Official Dokploy template submitted** — [Dokploy/templates PR #1330](https://github.com/Dokploy/templates/pull/1330): the blueprint passed the templates repo validation (all CI checks green) and is awaiting maintainer review.
 
+> ⚠️ **Official MikroTik software — full speed needs a license.** This image packages the **genuine, unmodified** MikroTik CHR (Cloud Hosted Router), downloaded directly from MikroTik's official servers and checksum-verified. Without activation it runs in CHR's **free mode, limited by MikroTik to 1 Mbit/s per interface**. Activate the free 60-day trial or buy a license (P1 / P10 / P-Unlimited) from your MikroTik account at **[mikrotik.com](https://mikrotik.com)** — see [Licensing & Activation](#licensing--activation) below.
+
 ---
 
 ## 1. Quickstart (Use Our Image)
@@ -186,6 +188,21 @@ See the complete test evidence in **[docs/build-your-own.md](docs/build-your-own
 ## Notes & Licensing
 
 - **Persistence:** RouterOS disk state is stored on the `mikrotik_data` volume (`/routeros/data/chr.vdi`). Container restarts preserve all configuration.
-- **CHR Licensing:** Free CHR licenses are limited by MikroTik to 1 Mbit/s per interface. Attach a paid or trial 60-day license from your MikroTik account for full-speed operation.
-- **Trademark Notice:** MikroTik and RouterOS are registered trademarks of SIA Mikrotīkls. This project is an independent community project and is not affiliated with or endorsed by SIA Mikrotīkls.
-- **Project License:** Licensed under the [MIT License](LICENSE).
+- **Project License (this repo only):** Licensed under the [MIT License](LICENSE) — see Copyright & Trademarks below for what it does *not* cover.
+
+### Licensing & Activation
+
+This project does **not** include, grant, or resell any RouterOS license. The CHR inside the image is the **official MikroTik CHR release** — downloaded from MikroTik's official servers at image build time and verified against a pinned SHA-256 checksum. It is not cracked, patched, or modified in any way.
+
+CHR is commercial software by **SIA Mikrotīkls**. It runs without activation in a **free level limited to 1 Mbit/s per interface**. To unlock full speed you activate a license on MikroTik's official website:
+
+1. Create a free account at **[mikrotik.com/client](https://mikrotik.com/client)**.
+2. Boot this image and note your CHR's **System ID** (WinBox / WebFig → *System → License*).
+3. In your MikroTik account, open **CHR Licenses**: start the free **60-day trial**, or purchase a paid license — **P1** (1 Gbit/s per interface), **P10** (10 Gbit/s), or **P-Unlimited**.
+4. Assign the license to your CHR's System ID — RouterOS activates it online; no license key file is involved.
+
+Official references: **[mikrotik.com](https://mikrotik.com)** · [CHR product page](https://mikrotik.com/product/chr) · [CHR licensing documentation](https://help.mikrotik.com/docs/display/ROS/CHR+Licensing)
+
+### Copyright & Trademarks
+
+**MikroTik**, **RouterOS**, and **CHR** are registered trademarks of **SIA Mikrotīkls** (Latvia), and all rights in RouterOS and CHR belong exclusively to SIA Mikrotīkls. The MIT license of this repository covers **only** the container packaging written for this project (Dockerfile, entrypoint, provisioning scripts, and documentation) — it does **not** cover RouterOS/CHR itself, which remains governed by MikroTik's own license terms. This is an independent community project: it is not affiliated with, sponsored, or endorsed by SIA Mikrotīkls.
