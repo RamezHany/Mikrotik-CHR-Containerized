@@ -83,6 +83,8 @@ You can connect immediately through any of the following interfaces:
 
 The repository provides an automated, out-of-band provisioning profile in Docker Compose that configures the router via its API and permanently secures it.
 
+> **Example — adapt it before you run it.** The provisioning script, the branding package workflow, and the credentials shown in this guide (`ramez` / `ramez`) are this repository's worked example. Set your own admin username and a strong password, and generate your own `branding.dpk` with your own logo and defaults — never deploy the example credentials as-is.
+
 ### Prerequisites
 
 1. Ensure your `branding.dpk` package file is placed in the project root directory alongside `docker-compose.yml`. (See [Build Your Own — Branding](build-your-own.md#7-branding--the-default-configuration) to learn how to create this package with the MikroTik Branding Maker).
