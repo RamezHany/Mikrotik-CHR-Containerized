@@ -11,9 +11,7 @@ LABEL org.opencontainers.image.source="https://github.com/RamezHany/mikrotik-chr
 LABEL org.opencontainers.image.description="MikroTik RouterOS CHR running inside Docker using QEMU"
 
 ARG ROUTEROS_VERSION=7.20.4
-# TODO(Friday, at first build): fill in the sha256 of chr-7.20.4.vdi.zip from
-# the actual download and pin it here, like the reference projects do.
-ARG ROUTEROS_SHA256=
+ARG ROUTEROS_SHA256=7c1420075d27d1e72b132faf39805fc171e558b2ab8d54629bf4fc7bf7e44967
 
 ENV ROUTEROS_VERSION=$ROUTEROS_VERSION
 ENV ROUTEROS_IMAGE=chr-$ROUTEROS_VERSION.vdi
@@ -23,14 +21,14 @@ RUN apk add --no-cache \
     wget unzip \
     qemu-system-x86_64 qemu-img \
     iproute2 bridge-utils iptables \
+    busybox-extras \
     bash
 
 RUN mkdir -p /routeros/data && \
     wget --timeout=60 --tries=3 "${ROUTEROS_URL}" -O /routeros/image.zip && \
+    printf '%s  /routeros/image.zip\n' "$ROUTEROS_SHA256" | sha256sum -c - && \
     unzip /routeros/image.zip -d /routeros && \
     rm -f /routeros/image.zip
-# When ROUTEROS_SHA256 is pinned, add before unzip:
-#   printf '%s  /routeros/image.zip\n' "$ROUTEROS_SHA256" | sha256sum -c -
 
 WORKDIR /routeros
 COPY entrypoint.sh /routeros/entrypoint.sh
