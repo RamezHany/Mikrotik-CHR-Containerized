@@ -86,6 +86,18 @@ Connect immediately via:
 > [!CAUTION]
 > Do not leave the router with default credentials. Automated bots on the public internet scan for open RouterOS instances to hijack them. Change the password immediately, or run the one-shot provisioning runner below.
 
+### Updating RouterOS
+
+The image ships RouterOS 7.20.4, but you are **not** stuck on it. The guest is a genuine CHR, so RouterOS can be upgraded **in place, from inside the router**, to the latest stable release — no new image and no redeploy needed:
+
+- **WebFig / WinBox:** *System → Packages → Check for Updates*, then **Download & Install** (stable channel).
+- **Terminal:** `/system package update check-for-updates`, then `/system package update download`, then reboot to apply.
+
+The guest needs internet access for the check, which the container's NAT provides out of the box. The upgrade **persists** across container restarts and redeploys because the guest disk lives on the named volume; it is only lost if you delete the volume, which reinstalls the image's shipped version.
+
+> [!NOTE]
+> Verified end-to-end on 2026-11-14: a fresh deploy from this compose came up, took its address, reached the internet, and was upgraded in place to the latest stable RouterOS — running normally afterwards.
+
 ### One-Shot Provisioning
 
 Once your `branding.dpk` package is placed in the project root directory alongside `docker-compose.yml`, apply branding, create your administrator, and secure the router with:
