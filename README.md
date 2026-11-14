@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/header.svg" alt="MikroTik CHR Containerized — RouterOS in Docker via QEMU" width="100%">
+</p>
+
 # MikroTik CHR Containerized
 
 MikroTik RouterOS (Cloud Hosted Router / CHR) running inside Docker via QEMU — a **plain vanilla** image built for reproducible deployments.
