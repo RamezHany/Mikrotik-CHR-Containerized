@@ -94,6 +94,16 @@ Once your `branding.dpk` package is placed in the project root directory alongsi
 docker compose --profile provision run --rm provision
 ```
 
+> [!NOTE]
+> **The scripts and the branding package in this repo are an example — make them yours.**
+> `provision.py`, `defconfig.rsc`, and the `.dpk` workflow are one worked example of the provisioning model, including the example administrator name used in the docs. They are here to be copied and adapted, not used as-is:
+>
+> - Choose **your own** admin username and a strong password — never deploy the example credentials.
+> - Generate **your own** branding package in [MikroTik's Branding Maker](https://mikrotik.com) — your logo, your router identity, your company URL.
+> - Edit `defconfig.rsc` so a factory reset lands on **your** defaults, not the example's.
+>
+> The image stays vanilla either way; [PROVISIONING.md](PROVISIONING.md) explains the full model.
+
 For detailed quickstart instructions, see **[docs/quickstart.md](docs/quickstart.md)**.
 
 ---
