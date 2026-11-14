@@ -4,6 +4,12 @@ The image is **plain MikroTik CHR** (official download at build time,
 nothing baked in). Branding and the default login are applied AFTER a
 deployment boots, by **`provision.py`** in this folder:
 
+> **Worked example:** the user, password, and branding referenced in this
+> document (`ramez` / `ramez`, the RMZ package) are this repo's example
+> implementation of the model. Anyone adopting the model substitutes
+> their own admin credentials and generates their own `.dpk` — the
+> scripts are a template to adapt, not a fixed configuration to deploy.
+
 1. Waits for the RouterOS API, logs in as `admin` (blank password —
    proof it's a pristine image).
 2. Creates the branded admin user (**ramez / ramez**, group full) and
