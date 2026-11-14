@@ -75,14 +75,6 @@ Ports 8291 (WinBox) and 8728 (API) keep their standard numbers on both sides bec
 
 ---
 
-## Runs the Latest RouterOS
-
-The image ships RouterOS 7.20.4, and the guest upgrades in place to the current stable release from inside the router — verified at **RouterOS 7.25.1** on 2026-11-14, running on the free CHR level.
-
-![WinBox System Resources: RouterOS 7.25.1 running on the containerized CHR](images/winbox-routeros-7.25.1-resources.png)
-
----
-
 ## Next Steps
 
 - Proceed to the **[Quickstart Guide](quickstart.md)** to launch the container.
