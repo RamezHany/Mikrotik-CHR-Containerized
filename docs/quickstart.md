@@ -36,6 +36,8 @@ docker pull ramezhany1/mikrotik-chr-containerized:7.20.4
 
 The repository includes a ready-to-run [`docker-compose.yml`](https://github.com/RamezHany/mikrotik-chr-containerized/blob/main/docker-compose.yml) configured with persistent storage, hardware sizing, and port bindings.
 
+Two sibling files ship alongside it: `docker-compose.dokploy.yml` (the exact compose submitted as the official Dokploy template) and `docker-compose.dev.yml` (builds the image from source and carries the provisioning profile used in §4). See [DEPLOY.md](https://github.com/RamezHany/mikrotik-chr-containerized/blob/main/DEPLOY.md) for every deployment path, including plain `docker run`.
+
 1. Clone or download the repository:
    ```bash
    git clone https://github.com/RamezHany/mikrotik-chr-containerized.git
@@ -87,7 +89,7 @@ The repository provides an automated, out-of-band provisioning profile in Docker
 
 ### Prerequisites
 
-1. Ensure your `branding.dpk` package file is placed in the project root directory alongside `docker-compose.yml`. (See [Build Your Own — Branding](build-your-own.md#7-branding--the-default-configuration) to learn how to create this package with the MikroTik Branding Maker).
+1. Ensure your `branding.dpk` package file is placed in the project root directory alongside `docker-compose.dev.yml` — the provisioning profile lives in the development compose, not the ready-to-run one. (See [Build Your Own — Branding](build-your-own.md#7-branding--the-default-configuration) to learn how to create this package with the MikroTik Branding Maker).
 2. The router container must already be running (`docker compose up -d`).
 
 ### Run the Provisioning Profile
@@ -95,7 +97,7 @@ The repository provides an automated, out-of-band provisioning profile in Docker
 Execute the following command:
 
 ```bash
-docker compose --profile provision run --rm provision
+docker compose -f docker-compose.dev.yml --profile provision run --rm provision
 ```
 
 ### What Provisioning Changes
