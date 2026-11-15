@@ -20,6 +20,8 @@ The project documentation is structured into two sequential paths depending on y
 2. **[Build Your Own from Scratch](build-your-own.md)**  
    *The complete explanation.* How and why every piece works so you can reproduce the entire container architecture from scratch: the Dockerfile, TAP/bridge networking, DHCP allocation, port mapping philosophy, automated security provisioning, branding packages with factory reset survival, and verified test checklists.
 
+**Deploying to Dokploy?** The repository ships the exact template compose (`docker-compose.dokploy.yml`). See [DEPLOY.md](https://github.com/RamezHany/mikrotik-chr-containerized/blob/main/DEPLOY.md) for every deployment path — plain `docker run`, the ready-to-run compose, Dokploy, and the development compose.
+
 ---
 
 ## Hardware Specifications & Defaults
