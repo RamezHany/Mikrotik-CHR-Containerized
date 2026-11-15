@@ -96,7 +96,18 @@ The image ships RouterOS 7.20.4, but you are **not** stuck on it. The guest is a
 The guest needs internet access for the check, which the container's NAT provides out of the box. The upgrade **persists** across container restarts and redeploys because the guest disk lives on the named volume; it is only lost if you delete the volume, which reinstalls the image's shipped version.
 
 > [!NOTE]
-> Verified end-to-end on 2026-11-14: a fresh deploy from this compose came up, took its address, reached the internet, and was upgraded in place to the latest stable RouterOS — running normally afterwards.
+> Verified end-to-end on 2026-11-14: a fresh deploy from this compose came up, took its address, reached the internet, and was upgraded in place to the latest stable, **RouterOS 7.25.1** — running normally afterwards.
+
+
+![WinBox System Resources: RouterOS 7.25.1 running on the containerized CHR](docs/images/winbox-routeros-7.25.1-resources.png)
+
+*The same instance after the in-place upgrade: RouterOS 7.25.1 (build 2026-11-02) on the template sizing — 4 vCPUs, 4 GiB RAM, ~1 GiB disk.*
+
+![WinBox: Resources and License windows of the upgraded instance](docs/images/winbox-routeros-7.25.1-overview.png)
+
+![WinBox License window: CHR free level](docs/images/winbox-license-free.png)
+
+*Upgrades need no paid license: the instance runs on the CHR free level (1 Mbit/s per interface) and updates normally.*
 
 ### One-Shot Provisioning
 
