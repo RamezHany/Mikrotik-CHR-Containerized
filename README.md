@@ -63,14 +63,33 @@ docker pull ramezhany1/mikrotik-chr-containerized:7.20.4
    docker compose up -d
    ```
 
-*(Alternative: Run directly with `docker run`):*
+*(Alternative: run it directly with `docker run` — the same settings as the compose):*
 ```bash
-docker run -d --name mikrotik --privileged \
-  --cap-add NET_ADMIN --device /dev/net/tun \
+docker run -d \
+  --name mikrotik-chr \
+  --privileged \
+  --cap-add NET_ADMIN \
+  --device /dev/net/tun \
+  -e QEMU_RAM=4096 \
+  -e QEMU_CPUS=4 \
+  -e DISK_SIZE=1G \
   -v mikrotik_data:/routeros/data \
-  -p 8291:8291 -p 8728:8728 -p 808:80 -p 322:22 -p 1010:443 \
+  -p 8291:8291 \
+  -p 8728:8728 \
+  -p 808:80 \
+  -p 322:22 \
+  -p 1010:443 \
+  --restart unless-stopped \
   ghcr.io/ramezhany/mikrotik-chr-containerized:7.20.4
 ```
+
+**Three composes, one image.** This repository ships three compose files:
+
+- `docker-compose.yml` — the ready-to-run one used above (published image, nothing to build).
+- `docker-compose.dokploy.yml` — the exact compose submitted as the official Dokploy template; on Dokploy you can deploy the same setup as a one-click template.
+- `docker-compose.dev.yml` — builds the image from source and carries the `provision` profile used in [One-Shot Provisioning](#one-shot-provisioning) below.
+
+See [DEPLOY.md](DEPLOY.md) for the full deployment guide.
 
 ### First Login
 
@@ -111,10 +130,10 @@ The guest needs internet access for the check, which the container's NAT provide
 
 ### One-Shot Provisioning
 
-Once your `branding.dpk` package is placed in the project root directory alongside `docker-compose.yml`, apply branding, create your administrator, and secure the router with:
+Once your `branding.dpk` package is placed in the project root directory alongside `docker-compose.dev.yml` (the provisioning profile lives in the development compose), apply branding, create your administrator, and secure the router with:
 
 ```bash
-docker compose --profile provision run --rm provision
+docker compose -f docker-compose.dev.yml --profile provision run --rm provision
 ```
 
 > [!NOTE]
@@ -140,6 +159,8 @@ If you want to customize the image, inspect the internals, or build your own fro
    ```bash
    docker build -t ghcr.io/ramezhany/mikrotik-chr-containerized:7.20.4 .
    ```
+
+   Or build and run it in one step with the development compose: `docker compose -f docker-compose.dev.yml up -d --build`.
 3. **Bridge/TAP Networking:** An internal bridge `br0` (`172.24.0.1/16`) and TAP interface `tap0` are created inside the container network namespace. A lightweight DHCP server (`udhcpd`) leases `172.24.0.2` to the RouterOS virtual NIC. Outbound NAT (`MASQUERADE`) provides internet access, and full inbound DNAT forwards exposed host traffic to `172.24.0.2`.
 4. **Hardware Sizing:** Tunable via `QEMU_CPUS` (default 4), `QEMU_RAM` (default 4096), and `DISK_SIZE` (default 1G).
 
