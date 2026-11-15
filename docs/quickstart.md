@@ -111,6 +111,22 @@ The provision runner executes [`provision.py`](https://github.com/RamezHany/mikr
 
 ---
 
+## 5. Updating RouterOS
+
+The image ships RouterOS 7.20.4, but the guest is a genuine CHR and is not pinned to it: upgrade in place from inside the router — *System → Packages → Check for Updates → Download & Install* (stable channel), or `/system package update check-for-updates` followed by `/system package update download` in a terminal, then reboot. The guest's NAT provides the internet access the check needs, and the upgrade persists on the named volume across restarts and redeploys.
+
+![WinBox System Resources: RouterOS 7.25.1 running on the containerized CHR](images/winbox-routeros-7.25.1-resources.png)
+
+*Verified 2026-11-14: this image, deployed from this quickstart, upgraded in place to RouterOS 7.25.1 (the current stable) and running normally.*
+
+![WinBox: Resources and License windows of the upgraded instance](images/winbox-routeros-7.25.1-overview.png)
+
+![WinBox License window: CHR free level](images/winbox-license-free.png)
+
+*The free CHR level is enough — no activation is required to run or to upgrade.*
+
+---
+
 ## Summary of Management Ports
 
 | Method | Host Connection | Default State | Post-Provisioning State |
